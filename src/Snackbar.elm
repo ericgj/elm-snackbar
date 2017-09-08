@@ -2,11 +2,14 @@ module Snackbar exposing
     ( Model
     , Notification
     , Msg
+    , Config
+    , UpdateConfig
     , empty
     , defaultUpdateConfig
     , emptyConfig
     , push
     , update
+    , view
     )
 
 import Time
@@ -17,14 +20,14 @@ import Html.Events
 
 -- STACK
 
-type Model a 
+type Stack a 
     = Empty
     | TransitioningIn (a, Float) (List (a, Float))
     | Active (a, Float) (List (a, Float))
     | TransitioningOut (a, Float) (List (a, Float))
 
     
-empty : Model a
+empty : Stack a
 empty = 
     Empty
     
@@ -50,7 +53,7 @@ defaultUpdateConfig tagger =
         , delayTransitioningOut = 2000
         }
 
-update : UpdateConfig msg -> Msg -> Model a -> ( Model a, Cmd msg )
+update : UpdateConfig msg -> Msg -> Stack a -> ( Stack a, Cmd msg )
 update (UpdateConfig c) msg model =
     let
         map tagger (m,cmd) =
@@ -70,7 +73,7 @@ update (UpdateConfig c) msg model =
                     |> map c.updateMsg
 
 
-push : UpdateConfig msg -> Float -> a -> Model a -> (Model a, Cmd msg)    
+push : UpdateConfig msg -> Float -> a -> Stack a -> (Stack a, Cmd msg)    
 push (UpdateConfig c) timeout a model =
     case model of
         Empty ->
@@ -94,7 +97,7 @@ push (UpdateConfig c) timeout a model =
             )    
             
 
-activate : Model a -> (Model a, Cmd Msg)
+activate : Stack a -> (Stack a, Cmd Msg)
 activate model =
     case model of
         TransitioningIn (current, timeout) others ->
@@ -107,7 +110,7 @@ activate model =
             , Cmd.none
             )
             
-transitionOut : Float -> Model a -> (Model a, Cmd Msg)
+transitionOut : Float -> Stack a -> (Stack a, Cmd Msg)
 transitionOut timeout model =
     case model of
         Active current others ->
@@ -120,7 +123,7 @@ transitionOut timeout model =
             , Cmd.none
             )
             
-pop : Float -> Model a -> ( Model a, Cmd Msg )
+pop : Float -> Stack a -> ( Stack a, Cmd Msg )
 pop timeout model =
     case model of        
         TransitioningOut _ (next :: others) ->
@@ -141,6 +144,9 @@ pop timeout model =
             
 -- NOTIFICATION
      
+type alias Model msg = 
+    Stack (Notification msg)
+
 type Config msg =
     Config
         { messageAttributes : List (Html.Attribute msg)
@@ -166,7 +172,7 @@ emptyConfig =
         , transitioningOutAttributes = []
         }
 
-view : Config msg -> Model (Notification msg) -> Html msg
+view : Config msg -> Model msg -> Html msg
 view (Config c) model =
     case model of
         Empty ->
