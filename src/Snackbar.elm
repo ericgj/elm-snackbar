@@ -1,12 +1,18 @@
 module Snackbar exposing
     ( Model
     , Notification
-    , Msg
+    , Msg(TransitionOut)
     , Config
     , UpdateConfig
     , empty
     , defaultUpdateConfig
     , emptyConfig
+    , setAttributes
+    , setMessageAttributes
+    , setActionAttributes
+    , setTransitioningInAttributes
+    , setActiveAttributes
+    , setTransitioningOutAttributes
     , push
     , update
     , view
@@ -149,7 +155,8 @@ type alias Model msg =
 
 type Config msg =
     Config
-        { messageAttributes : List (Html.Attribute msg)
+        { attributes : List (Html.Attribute msg)
+        , messageAttributes : List (Html.Attribute msg)
         , actionAttributes : List (Html.Attribute msg)
         , transitioningInAttributes : List (Html.Attribute msg)
         , activeAttributes : List (Html.Attribute msg)
@@ -165,12 +172,38 @@ type alias Notification msg =
 emptyConfig : Config msg
 emptyConfig =
     Config
-        { messageAttributes = []
+        { attributes = []
+        , messageAttributes = []
         , actionAttributes = []
         , transitioningInAttributes = []
         , activeAttributes = []
         , transitioningOutAttributes = []
         }
+
+setAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
+setAttributes attrs (Config c) =
+    Config { c | attributes = attrs }
+
+setMessageAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
+setMessageAttributes attrs (Config c) =
+    Config { c | messageAttributes = attrs }
+
+setActionAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
+setActionAttributes attrs (Config c) =
+    Config { c | actionAttributes = attrs }
+
+setTransitioningInAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
+setTransitioningInAttributes attrs (Config c) =
+    Config { c | transitioningInAttributes = attrs }
+
+setActiveAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
+setActiveAttributes attrs (Config c) =
+    Config { c | activeAttributes = attrs }
+
+setTransitioningOutAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
+setTransitioningOutAttributes attrs (Config c) =
+    Config { c | transitioningOutAttributes = attrs }
+
 
 view : Config msg -> Model msg -> Html msg
 view (Config c) model =
@@ -180,7 +213,7 @@ view (Config c) model =
             
         TransitioningIn (notif, _) _ ->
             viewNotification 
-                { container = c.transitioningInAttributes
+                { container = c.attributes ++ c.transitioningInAttributes
                 , message = c.messageAttributes
                 , action = c.actionAttributes
                 }                
@@ -188,7 +221,7 @@ view (Config c) model =
             
         Active (notif, _) _ ->
             viewNotification 
-                { container = c.activeAttributes
+                { container = c.attributes ++ c.activeAttributes
                 , message = c.messageAttributes
                 , action = c.actionAttributes
                 }                
@@ -196,7 +229,7 @@ view (Config c) model =
             
         TransitioningOut (notif, _) _ ->
             viewNotification 
-                { container = c.transitioningOutAttributes
+                { container = c.attributes ++ c.transitioningOutAttributes
                 , message = c.messageAttributes
                 , action = c.actionAttributes
                 }

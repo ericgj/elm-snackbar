@@ -1,10 +1,11 @@
 module Main exposing (main)
 
+import Color
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Snackbar
-
+import Snackbar.Mdl
 
 main : Program Never Model Msg
 main =
@@ -28,10 +29,18 @@ init =
     , Cmd.none
     )
 
+snackbarConfig : Snackbar.Config msg
+snackbarConfig =
+    Snackbar.Mdl.inline
+        { backgroundColor = Color.black
+        , actionColor = Color.yellow
+        , fontFamily = Just "sans-serif"
+        }
+
 view : Model -> Html Msg
 view { snackbar, state } =
     div []
-        [ Snackbar.view Snackbar.emptyConfig snackbar
+        [ Snackbar.view snackbarConfig snackbar
         , button [ onClick Trigger ]
             [ text <| toString state ]
         ]
@@ -41,8 +50,8 @@ type Msg
     | Trigger
     | Toggle
 
-snackbarConfig : Snackbar.UpdateConfig Msg
-snackbarConfig =
+snackbarUpdateConfig : Snackbar.UpdateConfig Msg
+snackbarUpdateConfig =
     Snackbar.defaultUpdateConfig UpdateSnackbar
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -51,7 +60,7 @@ update msg model =
         UpdateSnackbar submsg ->
             let
                 (newSnackbar, subcmd) =
-                    Snackbar.update snackbarConfig submsg model.snackbar
+                    Snackbar.update snackbarUpdateConfig submsg model.snackbar
             in
                 ( { model | snackbar = newSnackbar }
                 , subcmd
@@ -61,8 +70,9 @@ update msg model =
             let
                 (newSnackbar, subcmd) =
                     Snackbar.push 
-                        snackbarConfig 3000 
-                        { message = "Try clicking this link to toggle the button"
+                        snackbarUpdateConfig 
+                        20000
+                        { message = "Try clicking here to toggle the button"
                         , action = Toggle
                         , actionText = (toString <| toggle model.state)
                         }
@@ -76,7 +86,19 @@ update msg model =
         Toggle ->
             ( { model | state = toggle model.state }
             , Cmd.none
-            )
+            ) 
+                |> andTransitionOut
+
+andTransitionOut : (Model, Cmd Msg) -> (Model, Cmd Msg)
+andTransitionOut (model, cmd) =
+    let
+        (newSnackbar, subcmd) =
+            Snackbar.update snackbarUpdateConfig Snackbar.TransitionOut  model.snackbar
+    in
+        ( { model | snackbar = newSnackbar }
+        , Cmd.batch [ cmd, subcmd ]
+        )
+
 
 toggle : AB -> AB
 toggle state =
