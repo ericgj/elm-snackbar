@@ -20,11 +20,13 @@ type alias Config msg =
     , position : Position
     }
 
+
 type Position
     = TopLeft String String
     | TopRight String String
     | BottomLeft String String
     | BottomRight String String
+
 
 inline : Config msg -> Snackbar.Config msg
 inline { updateMsg, backgroundColor, actionColor, fontFamily, position } =
@@ -165,30 +167,31 @@ transitioningOutStyle =
         ]
     ]
 
-positionToStyles : Position -> List (String, String)
+
+positionToStyles : Position -> List ( String, String )
 positionToStyles position =
     case position of
         TopLeft top left ->
             [ ( "top", top )
-            , ( "left", left ) 
+            , ( "left", left )
             , ( "transform", "translate(0, -100px)" )
             ]
 
         TopRight top right ->
-            [ ("top", top)
-            , ("right", right) 
+            [ ( "top", top )
+            , ( "right", right )
             , ( "transform", "translate(0, -100px)" )
             ]
 
         BottomLeft bottom left ->
             [ ( "bottom", bottom )
-            , ( "left", left)
+            , ( "left", left )
             , ( "transform", "translate(0, 100px)" )
             ]
 
         BottomRight bottom right ->
             [ ( "bottom", bottom )
-            , ( "right", right ) 
+            , ( "right", right )
             , ( "transform", "translate(0, 100px)" )
             ]
 

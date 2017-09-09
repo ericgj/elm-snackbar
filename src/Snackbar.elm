@@ -73,10 +73,10 @@ update (Config c) msg model =
                     |> wrap (Just extmsg) c.updateMsg
 
 
-andIfUserAction : 
-    (msg -> model -> (model, Cmd msg)) 
-    -> Maybe msg 
-    -> ( model, Cmd msg ) 
+andIfUserAction :
+    (msg -> model -> ( model, Cmd msg ))
+    -> Maybe msg
+    -> ( model, Cmd msg )
     -> ( model, Cmd msg )
 andIfUserAction update m ( model, cmd ) =
     let
@@ -86,7 +86,6 @@ andIfUserAction update m ( model, cmd ) =
                 |> Maybe.withDefault ( model, Cmd.none )
     in
         ( model_, Cmd.batch [ cmd, cmd_ ] )
-
 
 
 push : Config msg -> Float -> a -> Stack a -> ( Stack a, Cmd msg )
