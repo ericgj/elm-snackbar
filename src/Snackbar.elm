@@ -14,6 +14,12 @@ module Snackbar
         , setTransitioningInAttributes
         , setActiveAttributes
         , setTransitioningOutAttributes
+        , addAttributes
+        , addMessageAttributes
+        , addActionAttributes
+        , addTransitioningInAttributes
+        , addActiveAttributes
+        , addTransitioningOutAttributes
         , push
         , update
         , andIfUserAction
@@ -161,7 +167,7 @@ pop timeout model =
 
 
 -- CONFIG
-{- TODO: really this should be
+{- TODO: really this should be something like
 
    type Config display msg =
        Config
@@ -232,30 +238,54 @@ setAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
 setAttributes attrs (Config c) =
     Config { c | attributes = attrs }
 
+addAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
+addAttributes attrs (Config c) =
+    Config { c | attributes = c.attributes ++ attrs }
+
 
 setMessageAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
 setMessageAttributes attrs (Config c) =
     Config { c | messageAttributes = attrs }
+
+addMessageAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
+addMessageAttributes attrs (Config c) =
+    Config { c | messageAttributes = c.messageAttributes ++ attrs }
 
 
 setActionAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
 setActionAttributes attrs (Config c) =
     Config { c | actionAttributes = attrs }
 
+addActionAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
+addActionAttributes attrs (Config c) =
+    Config { c | actionAttributes = c.actionAttributes ++ attrs }
+
 
 setTransitioningInAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
 setTransitioningInAttributes attrs (Config c) =
     Config { c | transitioningInAttributes = attrs }
+
+addTransitioningInAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
+addTransitioningInAttributes attrs (Config c) =
+    Config { c | transitioningInAttributes = c.transitioningInAttributes ++ attrs }
 
 
 setActiveAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
 setActiveAttributes attrs (Config c) =
     Config { c | activeAttributes = attrs }
 
+addActiveAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
+addActiveAttributes attrs (Config c) =
+    Config { c | activeAttributes = c.activeAttributes ++ attrs }
+
 
 setTransitioningOutAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
 setTransitioningOutAttributes attrs (Config c) =
     Config { c | transitioningOutAttributes = attrs }
+
+addTransitioningOutAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
+addTransitioningOutAttributes attrs (Config c) =
+    Config { c | transitioningOutAttributes = c.transitioningOutAttributes ++ attrs }
 
 
 
