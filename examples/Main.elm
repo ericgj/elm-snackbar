@@ -72,7 +72,7 @@ update msg model =
                 ( { model | snackbar = newSnackbar }
                 , subcmd
                 )
-                    |> andMaybeUpdate extmsg
+                    |> Snackbar.andIfUserAction update extmsg
 
         Trigger ->
             let
@@ -94,17 +94,6 @@ update msg model =
             ( { model | state = toggle model.state }
             , Cmd.none
             )
-
-
-andMaybeUpdate : Maybe Msg -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
-andMaybeUpdate m ( model, cmd ) =
-    let
-        ( model_, cmd_ ) =
-            m
-                |> Maybe.map (\msg -> update msg model)
-                |> Maybe.withDefault ( model, Cmd.none )
-    in
-        ( model_, Cmd.batch [ cmd, cmd_ ] )
 
 
 toggle : AB -> AB

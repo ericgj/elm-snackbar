@@ -16,6 +16,7 @@ module Snackbar
         , setTransitioningOutAttributes
         , push
         , update
+        , andIfUserAction
         , view
         )
 
@@ -70,6 +71,22 @@ update (Config c) msg model =
             UserClick extmsg ->
                 transitionOut c.delayTransitioningOut model
                     |> wrap (Just extmsg) c.updateMsg
+
+
+andIfUserAction : 
+    (msg -> model -> (model, Cmd msg)) 
+    -> Maybe msg 
+    -> ( model, Cmd msg ) 
+    -> ( model, Cmd msg )
+andIfUserAction update m ( model, cmd ) =
+    let
+        ( model_, cmd_ ) =
+            m
+                |> Maybe.map (\msg -> update msg model)
+                |> Maybe.withDefault ( model, Cmd.none )
+    in
+        ( model_, Cmd.batch [ cmd, cmd_ ] )
+
 
 
 push : Config msg -> Float -> a -> Stack a -> ( Stack a, Cmd msg )
