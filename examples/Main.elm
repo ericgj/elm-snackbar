@@ -29,10 +29,11 @@ init =
     , Cmd.none
     )
 
-snackbarConfig : Snackbar.Config msg
+snackbarConfig : Snackbar.Config Msg
 snackbarConfig =
     Snackbar.Mdl.inline
-        { backgroundColor = Color.black
+        { updateMsg = UpdateSnackbar
+        , backgroundColor = Color.black
         , actionColor = Color.yellow
         , fontFamily = Just "sans-serif"
         }
@@ -46,35 +47,33 @@ view { snackbar, state } =
         ]
         
 type Msg
-    = UpdateSnackbar Snackbar.Msg
+    = UpdateSnackbar (Snackbar.Msg Msg)
     | Trigger
     | Toggle
-
-snackbarUpdateConfig : Snackbar.UpdateConfig Msg
-snackbarUpdateConfig =
-    Snackbar.defaultUpdateConfig UpdateSnackbar
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UpdateSnackbar submsg ->
             let
-                (newSnackbar, subcmd) =
-                    Snackbar.update snackbarUpdateConfig submsg model.snackbar
+                (newSnackbar, subcmd, extmsg) =
+                    Snackbar.update snackbarConfig submsg model.snackbar
+
             in
                 ( { model | snackbar = newSnackbar }
                 , subcmd
                 )
+                    |> andMaybeUpdate extmsg
 
         Trigger ->
             let
                 (newSnackbar, subcmd) =
                     Snackbar.push 
-                        snackbarUpdateConfig 
+                        snackbarConfig 
                         20000
                         { message = "Try clicking here to toggle the button"
                         , action = Toggle
-                        , actionText = (toString <| toggle model.state)
+                        , actionText = "Toggle"
                         }
                         model.snackbar
 
@@ -87,17 +86,17 @@ update msg model =
             ( { model | state = toggle model.state }
             , Cmd.none
             ) 
-                |> andTransitionOut
 
-andTransitionOut : (Model, Cmd Msg) -> (Model, Cmd Msg)
-andTransitionOut (model, cmd) =
+
+andMaybeUpdate : Maybe Msg -> (Model, Cmd Msg) -> (Model, Cmd Msg)
+andMaybeUpdate m (model, cmd) =
     let
-        (newSnackbar, subcmd) =
-            Snackbar.update snackbarUpdateConfig Snackbar.TransitionOut  model.snackbar
+        (model_, cmd_) =
+            m |> Maybe.map (\msg -> update msg model)
+              |> Maybe.withDefault (model, Cmd.none)
+
     in
-        ( { model | snackbar = newSnackbar }
-        , Cmd.batch [ cmd, subcmd ]
-        )
+        (model_, Cmd.batch [cmd, cmd_])
 
 
 toggle : AB -> AB

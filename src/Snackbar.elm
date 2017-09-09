@@ -1,12 +1,12 @@
 module Snackbar exposing
     ( Model
     , Notification
-    , Msg(TransitionOut)
+    , Msg
     , Config
-    , UpdateConfig
     , empty
-    , defaultUpdateConfig
     , emptyConfig
+    , setDelayTransitioningIn
+    , setDelayTransitioningOut
     , setAttributes
     , setMessageAttributes
     , setActionAttributes
@@ -38,49 +38,39 @@ empty =
     Empty
     
     
-type Msg 
+type Msg msg
     = Activate
     | TransitionOut
     | Pop
+    | UserClick msg
 
 
-type UpdateConfig msg =
-    UpdateConfig
-        { updateMsg : Msg -> msg
-        , delayTransitioningIn : Float
-        , delayTransitioningOut : Float
-        }
-
-defaultUpdateConfig : (Msg -> msg) -> UpdateConfig msg
-defaultUpdateConfig tagger =
-    UpdateConfig
-        { updateMsg = tagger
-        , delayTransitioningIn = 0
-        , delayTransitioningOut = 2000
-        }
-
-update : UpdateConfig msg -> Msg -> Stack a -> ( Stack a, Cmd msg )
-update (UpdateConfig c) msg model =
+update : Config msg -> Msg msg -> Stack a -> ( Stack a, Cmd msg, Maybe msg )
+update (Config c) msg model =
     let
-        map tagger (m,cmd) =
-            (m, Cmd.map tagger cmd)
+        wrap ext tagger (m,cmd) =
+            (m, Cmd.map tagger cmd, ext)
     in
         case msg of
             Activate ->
                 activate model 
-                    |> map c.updateMsg
+                    |> wrap Nothing c.updateMsg
             
             TransitionOut ->
                 transitionOut c.delayTransitioningOut model 
-                    |> map c.updateMsg
+                    |> wrap Nothing c.updateMsg
             
             Pop ->
                 pop c.delayTransitioningIn model 
-                    |> map c.updateMsg
+                    |> wrap Nothing c.updateMsg
+
+            UserClick extmsg ->
+                transitionOut c.delayTransitioningOut model
+                    |> wrap (Just extmsg) c.updateMsg
 
 
-push : UpdateConfig msg -> Float -> a -> Stack a -> (Stack a, Cmd msg)    
-push (UpdateConfig c) timeout a model =
+push : Config msg -> Float -> a -> Stack a -> (Stack a, Cmd msg)    
+push (Config c) timeout a model =
     case model of
         Empty ->
             ( TransitioningIn (a, timeout) []
@@ -103,7 +93,7 @@ push (UpdateConfig c) timeout a model =
             )    
             
 
-activate : Stack a -> (Stack a, Cmd Msg)
+activate : Stack a -> (Stack a, Cmd (Msg msg))
 activate model =
     case model of
         TransitioningIn (current, timeout) others ->
@@ -116,7 +106,7 @@ activate model =
             , Cmd.none
             )
             
-transitionOut : Float -> Stack a -> (Stack a, Cmd Msg)
+transitionOut : Float -> Stack a -> (Stack a, Cmd (Msg msg))
 transitionOut timeout model =
     case model of
         Active current others ->
@@ -129,7 +119,7 @@ transitionOut timeout model =
             , Cmd.none
             )
             
-pop : Float -> Stack a -> ( Stack a, Cmd Msg )
+pop : Float -> Stack a -> ( Stack a, Cmd (Msg msg) )
 pop timeout model =
     case model of        
         TransitioningOut _ (next :: others) ->
@@ -147,15 +137,42 @@ pop timeout model =
             , Cmd.none
             )
 
-            
--- NOTIFICATION
-     
-type alias Model msg = 
-    Stack (Notification msg)
+
+-- CONFIG
+
+{- TODO: really this should be
+
+type Config display msg =
+    Config
+        { updateMsg : Msg msg -> msg
+        , delayTransitioningIn : Float
+        , delayTransitioningOut : Float
+        , display : display
+        }
+
+where for Notifications, 
+
+type alias DisplayConfig msg =
+    { attributes : List (Html.Attribute msg)
+    , messageAttributes : List (Html.Attribute msg)
+    , actionAttributes : List (Html.Attribute msg)
+    , transitioningInAttributes : List (Html.Attribute msg)
+    , activeAttributes : List (Html.Attribute msg)
+    , transitioningOutAttributes : List (Html.Attribute msg)
+    }
+
+and
+
+config : Config (DisplayConfig msg) msg
+
+-}
 
 type Config msg =
     Config
-        { attributes : List (Html.Attribute msg)
+        { updateMsg : Msg msg -> msg
+        , delayTransitioningIn : Float
+        , delayTransitioningOut : Float
+        , attributes : List (Html.Attribute msg)
         , messageAttributes : List (Html.Attribute msg)
         , actionAttributes : List (Html.Attribute msg)
         , transitioningInAttributes : List (Html.Attribute msg)
@@ -163,22 +180,27 @@ type Config msg =
         , transitioningOutAttributes : List (Html.Attribute msg)
         }
 
-type alias Notification msg =
-    { message : String
-    , action : msg
-    , actionText : String
-    }
-    
-emptyConfig : Config msg
-emptyConfig =
+emptyConfig : (Msg msg -> msg) -> Config msg
+emptyConfig tagger =
     Config
-        { attributes = []
+        { updateMsg = tagger
+        , delayTransitioningIn = 0
+        , delayTransitioningOut = 0
+        , attributes = []
         , messageAttributes = []
         , actionAttributes = []
         , transitioningInAttributes = []
         , activeAttributes = []
         , transitioningOutAttributes = []
         }
+
+setDelayTransitioningIn : Float -> Config msg -> Config msg
+setDelayTransitioningIn n (Config c) =
+    Config { c | delayTransitioningIn = n }
+
+setDelayTransitioningOut : Float -> Config msg -> Config msg
+setDelayTransitioningOut n (Config c) =
+    Config { c | delayTransitioningOut = n }
 
 setAttributes : List (Html.Attribute msg) -> Config msg -> Config msg
 setAttributes attrs (Config c) =
@@ -205,6 +227,19 @@ setTransitioningOutAttributes attrs (Config c) =
     Config { c | transitioningOutAttributes = attrs }
 
 
+            
+-- NOTIFICATION
+     
+type alias Model msg = 
+    Stack (Notification msg)
+
+type alias Notification msg =
+    { message : String
+    , action : msg
+    , actionText : String
+    }
+    
+
 view : Config msg -> Model msg -> Html msg
 view (Config c) model =
     case model of
@@ -213,6 +248,7 @@ view (Config c) model =
             
         TransitioningIn (notif, _) _ ->
             viewNotification 
+                c.updateMsg
                 { container = c.attributes ++ c.transitioningInAttributes
                 , message = c.messageAttributes
                 , action = c.actionAttributes
@@ -221,6 +257,7 @@ view (Config c) model =
             
         Active (notif, _) _ ->
             viewNotification 
+                c.updateMsg
                 { container = c.attributes ++ c.activeAttributes
                 , message = c.messageAttributes
                 , action = c.actionAttributes
@@ -228,7 +265,8 @@ view (Config c) model =
                 notif
             
         TransitioningOut (notif, _) _ ->
-            viewNotification 
+            viewNotification
+                c.updateMsg
                 { container = c.attributes ++ c.transitioningOutAttributes
                 , message = c.messageAttributes
                 , action = c.actionAttributes
@@ -237,20 +275,21 @@ view (Config c) model =
 
                 
 viewNotification : 
-    { container : List (Html.Attribute msg) 
-    , message : List (Html.Attribute msg)
-    , action : List (Html.Attribute msg)
-    }
+    (Msg msg -> msg)
+    -> { container : List (Html.Attribute msg) 
+       , message : List (Html.Attribute msg)
+       , action : List (Html.Attribute msg)
+       }
     -> Notification msg 
     -> Html msg
-viewNotification attribs { message, action, actionText } =
+viewNotification tagger attribs { message, action, actionText } =
     Html.div attribs.container
         [ Html.div attribs.message [ Html.text message ]
         , Html.button 
-            ( Html.Events.onClick action :: attribs.action )
+            ( (Html.Events.onClick ( UserClick action |> tagger )) :: attribs.action )
             [ Html.text actionText ]
         ]
-            
+
 
 -- UTILS
          

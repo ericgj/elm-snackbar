@@ -9,15 +9,18 @@ import Html
 import Html.Attributes exposing (class, style)
 import Snackbar
 
-type alias Config =
-    { backgroundColor : Color
+type alias Config msg =
+    { updateMsg : Snackbar.Msg msg -> msg
+    , backgroundColor : Color
     , actionColor : Color
     , fontFamily : Maybe String
     }
 
-inline : Config -> Snackbar.Config msg
-inline { backgroundColor, actionColor, fontFamily } =
-    Snackbar.emptyConfig
+inline : Config msg -> Snackbar.Config msg
+inline { updateMsg, backgroundColor, actionColor, fontFamily } =
+    Snackbar.emptyConfig updateMsg
+        |> Snackbar.setDelayTransitioningIn 0
+        |> Snackbar.setDelayTransitioningOut 2000
         |> Snackbar.setAttributes (containerStyle backgroundColor fontFamily)
         |> Snackbar.setActiveAttributes activeStyle
         |> Snackbar.setMessageAttributes messageStyle
@@ -25,9 +28,11 @@ inline { backgroundColor, actionColor, fontFamily } =
         |> Snackbar.setTransitioningInAttributes transitioningInStyle
         |> Snackbar.setTransitioningOutAttributes transitioningOutStyle
 
-classes : Config -> Snackbar.Config msg
-classes { backgroundColor, actionColor, fontFamily } =
-    Snackbar.emptyConfig
+classes : Config msg -> Snackbar.Config msg
+classes { updateMsg, backgroundColor, actionColor, fontFamily } =
+    Snackbar.emptyConfig updateMsg
+        |> Snackbar.setDelayTransitioningIn 0
+        |> Snackbar.setDelayTransitioningOut 2000
         |> Snackbar.setAttributes (containerClass backgroundColor fontFamily)
         |> Snackbar.setActiveAttributes activeClass
         |> Snackbar.setMessageAttributes messageClass
