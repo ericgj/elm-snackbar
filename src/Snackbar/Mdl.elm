@@ -24,8 +24,10 @@ type alias Config msg =
 type Position
     = TopLeft String String
     | TopRight String String
+    | TopCenter String String
     | BottomLeft String String
     | BottomRight String String
+    | BottomCenter String String
 
 
 inline : Config msg -> Snackbar.Config msg
@@ -183,6 +185,15 @@ positionToStyles position =
             , ( "transform", "translate(0, -100px)" )
             ]
 
+        TopCenter top width ->
+            [ ( "top", top )
+            , ( "width", width )
+            , ( "left", "0" )
+            , ( "right", "0" )
+            , ( "margin", "0 auto" )
+            , ( "transform", "translate(0, -100px)" )
+            ]
+
         BottomLeft bottom left ->
             [ ( "bottom", bottom )
             , ( "left", left )
@@ -192,6 +203,15 @@ positionToStyles position =
         BottomRight bottom right ->
             [ ( "bottom", bottom )
             , ( "right", right )
+            , ( "transform", "translate(0, 100px)" )
+            ]
+
+        BottomCenter bottom width ->
+            [ ( "bottom", bottom )
+            , ( "width", width )
+            , ( "left", "0" )
+            , ( "right", "0" )
+            , ( "margin", "0 auto" )
             , ( "transform", "translate(0, 100px)" )
             ]
 

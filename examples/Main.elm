@@ -43,7 +43,7 @@ snackbarConfig =
         , backgroundColor = Color.black
         , actionColor = Color.yellow
         , fontFamily = Just "sans-serif"
-        , position = Snackbar.Mdl.BottomLeft "3rem" "3rem"
+        , position = Snackbar.Mdl.BottomCenter "3rem" "40%"
         }
 
 
