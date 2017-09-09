@@ -1,6 +1,7 @@
 module Snackbar.Mdl
     exposing
         ( Config
+        , Position(..)
         , inline
         , classes
         )
@@ -16,15 +17,21 @@ type alias Config msg =
     , backgroundColor : Color
     , actionColor : Color
     , fontFamily : Maybe String
+    , position : Position
     }
 
+type Position
+    = TopLeft String String
+    | TopRight String String
+    | BottomLeft String String
+    | BottomRight String String
 
 inline : Config msg -> Snackbar.Config msg
-inline { updateMsg, backgroundColor, actionColor, fontFamily } =
+inline { updateMsg, backgroundColor, actionColor, fontFamily, position } =
     Snackbar.emptyConfig updateMsg
         |> Snackbar.setDelayTransitioningIn 0
         |> Snackbar.setDelayTransitioningOut 2000
-        |> Snackbar.setAttributes (containerStyle backgroundColor fontFamily)
+        |> Snackbar.setAttributes (containerStyle position backgroundColor fontFamily)
         |> Snackbar.setActiveAttributes activeStyle
         |> Snackbar.setMessageAttributes messageStyle
         |> Snackbar.setActionAttributes (actionStyle actionColor)
@@ -33,22 +40,23 @@ inline { updateMsg, backgroundColor, actionColor, fontFamily } =
 
 
 classes : Config msg -> Snackbar.Config msg
-classes { updateMsg, backgroundColor, actionColor, fontFamily } =
+classes { updateMsg, backgroundColor, actionColor, fontFamily, position } =
     Snackbar.emptyConfig updateMsg
         |> Snackbar.setDelayTransitioningIn 0
         |> Snackbar.setDelayTransitioningOut 2000
-        |> Snackbar.setAttributes (containerClass backgroundColor fontFamily)
+        |> Snackbar.setAttributes (containerClass position backgroundColor fontFamily)
         |> Snackbar.setActiveAttributes activeClass
         |> Snackbar.setMessageAttributes messageClass
         |> Snackbar.setActionAttributes (actionClass actionColor)
 
 
-containerClass : Color -> Maybe String -> List (Html.Attribute msg)
-containerClass color font =
+containerClass : Position -> Color -> Maybe String -> List (Html.Attribute msg)
+containerClass position color font =
     [ class "mdl-snackbar"
     , style
         ([ ( "background-color", colorToString color )
          ]
+            ++ (positionToStyles position)
             ++ (font
                     |> Maybe.map (\f -> [ ( "font-family", f ) ])
                     |> Maybe.withDefault []
@@ -57,23 +65,20 @@ containerClass color font =
     ]
 
 
-containerStyle : Color -> Maybe String -> List (Html.Attribute msg)
-containerStyle color font =
+containerStyle : Position -> Color -> Maybe String -> List (Html.Attribute msg)
+containerStyle position color font =
     [ style
         ([ ( "position", "fixed" )
-         , ( "bottom", "0" )
-         , ( "left", "50%" )
          , ( "cursor", "default" )
          , ( "background-color", colorToString color )
          , ( "z-index", "3" )
-         , ( "display", "block" )
          , ( "display", "flex" )
          , ( "justify-content", "space-between" )
          , ( "will-change", "transform" )
-         , ( "transform", "translate(0, 80px)" )
          , ( "transition", "transform 0.25s cubic-bezier(0.4, 0, 1, 1)" )
          , ( "pointer-events", "none" )
          ]
+            ++ (positionToStyles position)
             ++ (font
                     |> Maybe.map (\f -> [ ( "font-family", f ) ])
                     |> Maybe.withDefault []
@@ -133,9 +138,6 @@ actionStyle color =
         , ( "padding", "14px 24px 14px 12px" )
         , ( "overflow", "hidden" )
         , ( "outline", "none" )
-
-        -- , ("opacity", "0")
-        -- , ("pointer-events", "none")
         , ( "cursor", "pointer" )
         , ( "text-decoration", "none" )
         , ( "text-align", "center" )
@@ -162,6 +164,33 @@ transitioningOutStyle =
         [ ( "transition", "transform 0.25s cubic-bezier(0.4, 0, 1, 1)" )
         ]
     ]
+
+positionToStyles : Position -> List (String, String)
+positionToStyles position =
+    case position of
+        TopLeft top left ->
+            [ ( "top", top )
+            , ( "left", left ) 
+            , ( "transform", "translate(0, -100px)" )
+            ]
+
+        TopRight top right ->
+            [ ("top", top)
+            , ("right", right) 
+            , ( "transform", "translate(0, -100px)" )
+            ]
+
+        BottomLeft bottom left ->
+            [ ( "bottom", bottom )
+            , ( "left", left)
+            , ( "transform", "translate(0, 100px)" )
+            ]
+
+        BottomRight bottom right ->
+            [ ( "bottom", bottom )
+            , ( "right", right ) 
+            , ( "transform", "translate(0, 100px)" )
+            ]
 
 
 colorToString : Color -> String
