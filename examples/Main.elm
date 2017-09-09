@@ -7,27 +7,34 @@ import Html.Events exposing (onClick)
 import Snackbar
 import Snackbar.Mdl
 
+
 main : Program Never Model Msg
 main =
-    Html.program 
+    Html.program
         { init = init
         , update = update
         , view = view
         , subscriptions = (\_ -> Sub.none)
         }
 
+
 type alias Model =
     { snackbar : Snackbar.Model Msg
     , state : AB
     }
 
-type AB = A | B
 
-init : (Model, Cmd Msg)
+type AB
+    = A
+    | B
+
+
+init : ( Model, Cmd Msg )
 init =
-    ( { snackbar = Snackbar.empty , state = A }
+    ( { snackbar = Snackbar.empty, state = A }
     , Cmd.none
     )
+
 
 snackbarConfig : Snackbar.Config Msg
 snackbarConfig =
@@ -38,6 +45,7 @@ snackbarConfig =
         , fontFamily = Just "sans-serif"
         }
 
+
 view : Model -> Html Msg
 view { snackbar, state } =
     div []
@@ -45,20 +53,21 @@ view { snackbar, state } =
         , button [ onClick Trigger ]
             [ text <| toString state ]
         ]
-        
+
+
 type Msg
     = UpdateSnackbar (Snackbar.Msg Msg)
     | Trigger
     | Toggle
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UpdateSnackbar submsg ->
             let
-                (newSnackbar, subcmd, extmsg) =
+                ( newSnackbar, subcmd, extmsg ) =
                     Snackbar.update snackbarConfig submsg model.snackbar
-
             in
                 ( { model | snackbar = newSnackbar }
                 , subcmd
@@ -67,16 +76,15 @@ update msg model =
 
         Trigger ->
             let
-                (newSnackbar, subcmd) =
-                    Snackbar.push 
-                        snackbarConfig 
+                ( newSnackbar, subcmd ) =
+                    Snackbar.push
+                        snackbarConfig
                         20000
                         { message = "Try clicking here to toggle the button"
                         , action = Toggle
                         , actionText = "Toggle"
                         }
                         model.snackbar
-
             in
                 ( { model | snackbar = newSnackbar }
                 , subcmd
@@ -85,25 +93,25 @@ update msg model =
         Toggle ->
             ( { model | state = toggle model.state }
             , Cmd.none
-            ) 
+            )
 
 
-andMaybeUpdate : Maybe Msg -> (Model, Cmd Msg) -> (Model, Cmd Msg)
-andMaybeUpdate m (model, cmd) =
+andMaybeUpdate : Maybe Msg -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+andMaybeUpdate m ( model, cmd ) =
     let
-        (model_, cmd_) =
-            m |> Maybe.map (\msg -> update msg model)
-              |> Maybe.withDefault (model, Cmd.none)
-
+        ( model_, cmd_ ) =
+            m
+                |> Maybe.map (\msg -> update msg model)
+                |> Maybe.withDefault ( model, Cmd.none )
     in
-        (model_, Cmd.batch [cmd, cmd_])
+        ( model_, Cmd.batch [ cmd, cmd_ ] )
 
 
 toggle : AB -> AB
 toggle state =
-   case state of
-       A -> B
-       B -> A
+    case state of
+        A ->
+            B
 
-
-
+        B ->
+            A
